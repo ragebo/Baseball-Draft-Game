@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diamond Draft — Family Baseball</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --white: #ffffff;
+    --surface: #fdfcfb;
+    --border: #e8e4df;
+    --border-strong: #d4cec7;
+    --text: #2d2926;
+    --muted: #9c9088;
+    --muted2: #b8b0a8;
+    --accent: #d97b4a;
+    --accent-soft: #f5e6da;
+    --accent-hover: #c86e3e;
+    --green: #5a8f6a;
+    --green-soft: #e4f0e8;
+    --red: #c25c5c;
+    --red-soft: #faeaea;
+    --blue: #5b7fa6;
+    --blue-soft: #e4edf5;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-hover: 0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  .app { max-width: 960px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header {
+    padding: 40px 0 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-mark {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 2px 8px rgba(217,123,74,0.3);
+    flex-shrink: 0;
+  }
+  .logo h1 { font-family: 'Lora', serif; font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .logo p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  nav {
+    display: flex; gap: 2px; margin-bottom: 32px;
+    background: var(--white); padding: 4px;
+    border-radius: 12px; border: 1px solid var(--border);
+    box-shadow: var(--shadow); width: fit-content;
+  }
+  .tab {
+    padding: 8px 22px; border-radius: 9px; cursor: pointer;
+    font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+    transition: all .18s; color: var(--muted);
+    background: none; border: none; white-space: nowrap;
+  }
+  .tab:hover:not(.active) { color: var(--text); background: var(--bg); }
+  .tab.active { background: var(--accent); color: white; font-weight: 600; box-shadow: 0 2px 6px rgba(217,123,74,0.25); }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 18px; border-radius: var(--radius-sm);
+    border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 14px;
+    transition: all .15s; white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 6px rgba(217,123,74,0.2); }
+  .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 3px 10px rgba(217,123,74,0.3); transform: translateY(-1px); }
+  .btn-ghost { background: var(--white); color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-strong); }
+  .btn-soft { background: var(--accent-soft); color: var(--accent); border: none; }
+  .btn-soft:hover { background: #eedad0; }
+  .btn-sm { padding: 6px 13px; font-size: 13px; }
+  .btn-xs { padding: 4px 9px; font-size: 12px; }
+
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+  .card + .card { margin-top: 14px; }
+  .card-title { font-family: 'Lora', serif; font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+  .games-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .date-row { display: flex; align-items: center; gap: 8px; }
+  .date-input {
+    background: var(--white); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    box-shadow: var(--shadow); cursor: pointer;
+  }
+  .date-input:focus { outline: none; border-color: var(--accent); }
+
+  .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .game-card {
+    background: var(--white); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 16px; cursor: pointer;
+    transition: all .18s; box-shadow: var(--shadow);
+  }
+  .game-card:hover { box-shadow: var(--shadow-hover); border-color: var(--accent); transform: translateY(-2px); }
+  .game-card.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 3px rgba(217,123,74,0.12); }
+  .game-teams { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .team-block { text-align: center; flex: 1; }
+  .team-abbr { font-family: 'Lora', serif; font-size: 20px; font-weight: 700; color: var(--text); }
+  .team-name { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .score-block { display: flex; align-items: center; gap: 8px; padding: 0 6px; }
+  .score-num { font-family: 'Lora', serif; font-size: 26px; font-weight: 700; color: var(--accent); min-width: 24px; text-align: center; }
+  .score-dash { color: var(--muted2); font-size: 18px; }
+  .game-status-bar {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    text-align: center; padding-top: 10px;
+    border-top: 1px solid var(--border); margin-top: 4px;
+  }
+  .st-live { color: var(--red); }
+  .st-final { color: var(--muted); }
+  .st-pre { color: var(--blue); }
+
+  .info-banner {
+    background: var(--accent-soft); border: 1px solid #e8cdb8;
+    border-radius: var(--radius-sm); padding: 11px 15px;
+    font-size: 13px; color: var(--accent-hover); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .alert-error {
+    background: var(--red-soft); border: 1px solid #e8c4c4;
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    font-size: 13px; color: var(--red); line-height: 1.6;
+  }
+
+  .family-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .member-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .member-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .member-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .member-name-input {
+    flex: 1; background: none; border: none; color: var(--text);
+    font-family: 'Lora', serif; font-size: 17px; font-weight: 700; padding: 0; width: 100%;
+  }
+  .member-name-input:focus { outline: none; border-bottom: 1.5px solid var(--accent); }
+  .player-slots { display: flex; flex-direction: column; gap: 8px; }
+  .player-slot {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: var(--radius-sm);
+    border: 1.5px dashed var(--border-strong); cursor: pointer;
+    transition: all .15s; background: var(--bg); min-height: 42px;
+  }
+  .player-slot:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .player-slot.filled { border-style: solid; border-color: var(--border); background: var(--white); cursor: default; }
+  .slot-label { color: var(--muted); font-size: 13px; flex: 1; }
+  .slot-name { font-size: 14px; font-weight: 600; flex: 1; }
+  .slot-meta { font-size: 11px; color: var(--muted); }
+  .slot-remove { background: none; border: none; cursor: pointer; color: var(--muted2); font-size: 16px; line-height: 1; padding: 0 2px; }
+  .slot-remove:hover { color: var(--red); }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(45,41,38,0.45);
+    backdrop-filter: blur(6px); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: var(--radius); padding: 26px;
+    width: 100%; max-width: 480px; max-height: 82vh;
+    display: flex; flex-direction: column; gap: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-family: 'Lora', serif; font-size: 20px; font-weight: 700; }
+  .search-wrap { position: relative; }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
+  .search-input {
+    width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+    color: var(--text); padding: 10px 14px 10px 36px;
+    border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent); background: white; }
+  .search-results { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 5px; min-height: 180px; }
+  .result-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: var(--radius-sm);
+    cursor: pointer; border: 1px solid transparent; transition: all .12s;
+  }
+  .result-item:hover { background: var(--accent-soft); border-color: #e8cdb8; }
+  .result-pos {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--muted); flex-shrink: 0;
+  }
+  .result-name { font-weight: 600; font-size: 14px; }
+  .result-team { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .no-results { text-align: center; color: var(--muted); padding: 30px 10px; font-size: 14px; }
+
+  .scoreboard-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .game-chip { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: 13px; color: var(--muted); box-shadow: var(--shadow); }
+  .game-chip strong { color: var(--text); }
+
+  .leaderboard { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .leader-row {
+    background: var(--white); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow);
+  }
+  .leader-row.first-place { border-color: var(--accent); background: linear-gradient(135deg, var(--accent-soft) 0%, var(--white) 60%); }
+  .rank-num { font-family: 'Lora', serif; font-size: 24px; font-weight: 700; color: var(--muted2); width: 28px; text-align: center; }
+  .first-place .rank-num { color: var(--accent); }
+  .leader-dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+  .leader-info { flex: 1; min-width: 0; }
+  .leader-name { font-weight: 700; font-size: 16px; }
+  .leader-players { font-size: 12px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .leader-breakdown { font-size: 12px; color: var(--muted); text-align: right; line-height: 1.6; }
+  .leader-score { font-family: 'Lora', serif; font-size: 34px; font-weight: 700; color: var(--accent); min-width: 52px; text-align: right; }
+
+  .stats-wrap { overflow-x: auto; }
+  .stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stats-table th {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); padding: 8px 10px; text-align: right;
+    border-bottom: 1.5px solid var(--border); white-space: nowrap;
+  }
+  .stats-table th:first-child { text-align: left; }
+  .stats-table td { padding: 11px 10px; text-align: right; border-bottom: 1px solid var(--border); color: var(--text); }
+  .stats-table td:first-child { text-align: left; font-weight: 500; }
+  .stats-table tr:last-child td { border-bottom: none; }
+  .stats-table tr:hover td { background: var(--bg); }
+  .val-pos { color: var(--green); font-weight: 600; }
+  .val-neg { color: var(--red); font-weight: 600; }
+  .val-pts { font-family: 'Lora', serif; font-size: 16px; font-weight: 700; }
+  .owner-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: middle; }
+
+  .scoring-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+  .scoring-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 14px;
+  }
+  .scoring-label { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 7px; }
+  .scoring-val-wrap { display: flex; align-items: center; gap: 5px; }
+  .scoring-val {
+    width: 58px; background: var(--white); border: 1px solid var(--border);
+    color: var(--text); padding: 5px 8px; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; text-align: right;
+  }
+  .scoring-val:focus { outline: none; border-color: var(--accent); }
+
+  .loading-state { text-align: center; padding: 50px 20px; color: var(--muted); }
+  .spinner {
+    display: inline-block; width: 22px; height: 22px;
+    border: 2.5px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); font-size: 14px; }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; }
+  .last-updated { font-size: 12px; color: var(--muted2); }
+
+  @media (max-width: 580px) {
+    header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    nav { width: 100%; overflow-x: auto; }
+    .scoring-grid { grid-template-columns: 1fr 1fr; }
+    .leader-breakdown { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-mark">⚾</div>
+      <div>
+        <h1>Diamond Draft</h1>
+        <p>Family Baseball Scoring Game</p>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="showTab('settings')">⚙ Scoring Rules</button>
+  </header>
+
+  <nav>
+    <button class="tab active" onclick="showTab('games')">① Pick Game</button>
+    <button class="tab" onclick="showTab('family')">② Your Squad</button>
+    <button class="tab" onclick="showTab('scoreboard')">③ Scoreboard</button>
+    <button class="tab" onclick="showTab('settings')">Rules</button>
+  </nav>
+
+  <!-- GAMES -->
+  <div id="panel-games" class="panel active">
+    <div class="games-header">
+      <div class="section-label" style="margin:0">Select a Game</div>
+      <div class="date-row">
+        <input type="date" class="date-input" id="date-picker" onchange="loadGames()">
+        <button class="btn btn-ghost btn-sm" onclick="setToday()">Today</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadGames()">↻</button>
+      </div>
+    </div>
+    <div id="games-list">
+      <div class="loading-state"><div class="spinner"></div><br>Loading games…</div>
+    </div>
+  </div>
+
+  <!-- FAMILY -->
+  <div id="panel-family" class="panel">
+    <div id="game-banner"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div class="section-label" style="margin:0">Family Members</div>
+      <button class="btn btn-soft btn-sm" onclick="addMember()">+ Add Person</button>
+    </div>
+    <div class="family-grid" id="family-grid"></div>
+    <div style="margin-top:24px;text-align:right;">
+      <button class="btn btn-primary" onclick="showTab('scoreboard')">View Scoreboard →</button>
+    </div>
+  </div>
+
+  <!-- SCOREBOARD -->
+  <div id="panel-scoreboard" class="panel">
+    <div class="scoreboard-top">
+      <div class="section-label" style="margin:0">Leaderboard</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="last-updated" id="last-updated"></span>
+        <button class="btn btn-ghost btn-sm" onclick="refreshScores()">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="scoreboard-content">
+      <div class="loading-state"><div class="spinner"></div><br>Loading scores…</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="panel-settings" class="panel">
+    <div class="card">
+      <div class="card-title">Scoring Rules</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px;">Adjust point values for each stat. Use negative numbers to subtract points.</p>
+      <div class="scoring-grid" id="scoring-grid"></div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-ghost btn-sm" onclick="resetScoring()">Reset to defaults</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Player Modal -->
+<div class="modal-overlay" id="player-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Pick a Player</div>
+      <button class="btn btn-ghost btn-xs" onclick="closeModal()">✕ Close</button>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="player-search" placeholder="Search player name…" oninput="onSearchInput()">
+    </div>
+    <div class="search-results" id="search-results">
+      <div class="no-results">Start typing to search MLB players</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#d97b4a','#5b7fa6','#5a8f6a','#9b6dbf','#c25c5c','#d4a44a'];
+
+const DEFAULT_SCORING = {
+  single:     { label: 'Single',        emoji: '🔹', value: 1  },
+  double:     { label: 'Double',        emoji: '🔷', value: 2  },
+  triple:     { label: 'Triple',        emoji: '💎', value: 3  },
+  homeRun:    { label: 'Home Run',      emoji: '💥', value: 5  },
+  rbi:        { label: 'RBI',           emoji: '🏃', value: 2  },
+  run:        { label: 'Run Scored',    emoji: '⭐', value: 0  },
+  stolenBase: { label: 'Stolen Base',   emoji: '⚡', value: 1  },
+  walk:       { label: 'Walk (BB)',     emoji: '🚶', value: 0  },
+  strikeout:  { label: 'Strikeout',    emoji: '❌', value: -1 },
+  hitByPitch: { label: 'Hit By Pitch', emoji: '🩹', value: 0  },
+};
+
+let state = {
+  selectedGame: null,
+  members: [
+    { id: 1, name: 'Mom',      players: [null, null] },
+    { id: 2, name: 'Dad',      players: [null, null] },
+    { id: 3, name: 'Player 3', players: [null, null] },
+    { id: 4, name: 'Player 4', players: [null, null] },
+  ],
+  scoring: JSON.parse(JSON.stringify(DEFAULT_SCORING)),
+  rosterCache: {},
+};
+let nextId = 10;
+
+try {
+  const s = JSON.parse(localStorage.getItem('dd2_state') || '{}');
+  if (s.members) state.members = s.members;
+  if (s.scoring) state.scoring = { ...DEFAULT_SCORING, ...s.scoring };
+} catch(e) {}
+
+function save() {
+  try { localStorage.setItem('dd2_state', JSON.stringify({ members: state.members, scoring: state.scoring })); } catch(e) {}
+}
+
+// ── Tabs ──────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  const order = ['games','family','scoreboard','settings'];
+  document.querySelectorAll('.tab')[order.indexOf(name)]?.classList.add('active');
+  if (name === 'family')     renderFamily();
+  if (name === 'scoreboard') refreshScores();
+  if (name === 'settings')   renderSettings();
+}
+
+// ── Games ─────────────────────────────────────────────
+function setToday() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('date-picker').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  loadGames();
+}
+
+// ── ESPN API (no CORS issues, works directly from browser) ──
+// ESPN scoreboard: returns today's or a specific date's MLB games
+// ESPN game summary: returns box score with player stats
+
+function espnDateParam(dateStr) {
+  // ESPN wants YYYYMMDD
+  return dateStr.replace(/-/g, '');
+}
+
+async function loadGames() {
+  const val = document.getElementById('date-picker').value;
+  if (!val) return;
+  const el = document.getElementById('games-list');
+  el.innerHTML = `<div class="loading-state"><div class="spinner"></div><br>Loading games...</div>`;
+
+  try {
+    const dateParam = espnDateParam(val);
+    const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateParam}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const events = data.events || [];
+
+    if (!events.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128197;</div><p>No games found for <strong>${val}</strong>.<br>Try a different date.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="games-grid">${events.map(renderGameCard).join('')}</div>`;
+  } catch(err) {
+    el.innerHTML = `<div class="alert-error"><strong>Couldn't load games.</strong><br>${err.message}<br>Check your connection and click &#8635; to retry.</div>`;
+  }
+}
+
+function renderGameCard(event) {
+  const comp = event.competitions[0];
+  const away = comp.competitors.find(c => c.homeAway === 'away');
+  const home = comp.competitors.find(c => c.homeAway === 'home');
+  const awayAbbr = away.team.abbreviation;
+  const homeAbbr = home.team.abbreviation;
+  const awayName = away.team.shortDisplayName || away.team.displayName;
+  const homeName = home.team.shortDisplayName || home.team.displayName;
+  const awayScore = away.score ?? '–';
+  const homeScore = home.score ?? '–';
+  const statusType = event.status.type;
+  const isLive = statusType.state === 'in';
+  const isFinal = statusType.state === 'post';
+  const statusCls = isLive ? 'st-live' : isFinal ? 'st-final' : 'st-pre';
+  const statusLabel = isLive ? `&#128308; Live · ${event.status.displayClock || ''}` : statusType.shortDetail || statusType.description;
+  const isSel = state.selectedGame?.id === event.id;
+  const escapedLabel = (awayAbbr + ' vs ' + homeAbbr).replace(/'/g, "\\'");
+
+  return `<div class="game-card${isSel ? ' selected' : ''}" onclick="selectGame('${event.id}', '${escapedLabel}')">
+    <div class="game-teams">
+      <div class="team-block">
+        <div class="team-abbr">${awayAbbr}</div>
+        <div class="team-name">${awayName}</div>
+      </div>
+      <div class="score-block">
+        <span class="score-num">${awayScore}</span>
+        <span class="score-dash">–</span>
+        <span class="score-num">${homeScore}</span>
+      </div>
+      <div class="team-block">
+        <div class="team-abbr">${homeAbbr}</div>
+        <div class="team-name">${homeName}</div>
+      </div>
+    </div>
+    <div class="game-status-bar ${statusCls}">${statusLabel}</div>
+  </div>`;
+}
+
+function selectGame(id, label) {
+  state.selectedGame = { id, label };
+  document.querySelectorAll('.game-card').forEach(c => {
+    const oc = c.getAttribute('onclick') || '';
+    c.classList.toggle('selected', oc.includes(`'${id}'`));
+  });
+  preloadRoster(id);
+  setTimeout(() => showTab('family'), 350);
+}
+
+async function preloadRoster(gameId) {
+  try {
+    const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=${gameId}`;
+    const data = await fetch(url).then(r => r.json());
+    state.rosterCache[gameId] = data;
+  } catch(e) {}
+}
+
+
+
+// ── Family ────────────────────────────────────────────
+function renderFamily() {
+  document.getElementById('game-banner').innerHTML = state.selectedGame
+    ? `<div class="info-banner">🎮 &nbsp;Game: <strong style="margin-left:3px">${state.selectedGame.label}</strong></div>`
+    : `<div class="info-banner" style="background:var(--blue-soft);border-color:#c0d4e8;color:var(--blue);">ℹ️ &nbsp;No game selected — go to <strong>① Pick Game</strong> first.</div>`;
+
+  document.getElementById('family-grid').innerHTML = state.members.map((m, i) => `
+    <div class="member-card">
+      <div class="member-header">
+        <div class="member-dot" style="background:${COLORS[i%COLORS.length]}"></div>
+        <input class="member-name-input" value="${m.name}" onchange="updateName(${m.id}, this.value)">
+        ${state.members.length > 1 ? `<button class="btn btn-ghost btn-xs" onclick="removeMember(${m.id})" style="color:var(--muted)">✕</button>` : ''}
+      </div>
+      <div class="player-slots">
+        ${[0,1].map(s => renderSlot(m, s)).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderSlot(m, s) {
+  const p = m.players[s];
+  if (p) return `<div class="player-slot filled">
+    <span class="slot-name">${p.name}</span>
+    <span class="slot-meta">${p.team} · ${p.position}</span>
+    <button class="slot-remove" onclick="removePlayer(${m.id},${s})">✕</button>
+  </div>`;
+  return `<div class="player-slot" onclick="openModal(${m.id},${s})">
+    <span style="color:var(--muted2);font-size:18px">＋</span>
+    <span class="slot-label">Add player ${s+1}</span>
+  </div>`;
+}
+
+function addMember() { nextId++; state.members.push({ id: nextId, name: `Player ${state.members.length+1}`, players: [null,null] }); save(); renderFamily(); }
+function removeMember(id) { state.members = state.members.filter(m => m.id != id); save(); renderFamily(); }
+function updateName(id, v) { const m = state.members.find(m => m.id == id); if(m){ m.name=v; save(); } }
+function removePlayer(id, s) { const m = state.members.find(m => m.id == id); if(m){ m.players[s]=null; save(); renderFamily(); } }
+
+// ── Modal ─────────────────────────────────────────────
+let _mId, _mSlot;
+function openModal(id, slot) {
+  _mId = Number(id); _mSlot = Number(slot);
+  document.getElementById('player-modal').classList.add('open');
+  document.getElementById('player-search').value = '';
+  document.getElementById('search-results').innerHTML = '<div class="no-results">Start typing to search MLB players</div>';
+  setTimeout(() => document.getElementById('player-search').focus(), 80);
+}
+function closeModal() { document.getElementById('player-modal').classList.remove('open'); }
+document.getElementById('player-modal').addEventListener('click', e => { if (e.target.id==='player-modal') closeModal(); });
+
+let _searchTimer;
+function onSearchInput() {
+  clearTimeout(_searchTimer);
+  const q = document.getElementById('player-search').value.trim();
+  if (q.length < 2) { document.getElementById('search-results').innerHTML = '<div class="no-results">Type at least 2 characters</div>'; return; }
+  _searchTimer = setTimeout(() => doSearch(q), 300);
+}
+
+async function doSearch(q) {
+  const el = document.getElementById('search-results');
+  el.innerHTML = '<div class="no-results">Searching...</div>';
+
+  // Search roster from selected game cache first
+  if (state.selectedGame && state.rosterCache[state.selectedGame.id]) {
+    const cached = state.rosterCache[state.selectedGame.id];
+    const players = [];
+    for (const teamPlayers of (cached?.boxscore?.players || [])) {
+      for (const group of (teamPlayers.statistics || [])) {
+        for (const athlete of (group.athletes || [])) {
+          const a = athlete.athlete;
+          if (a && a.displayName.toLowerCase().includes(q.toLowerCase())) {
+            players.push({
+              id: a.id,
+              name: a.displayName,
+              team: teamPlayers.team?.abbreviation || '?',
+              position: a.position?.abbreviation || '?'
+            });
+          }
+        }
+      }
+    }
+    // Dedupe
+    const seen = new Set();
+    const unique = players.filter(p => !seen.has(p.id) && seen.add(p.id));
+    if (unique.length) { renderResults(unique, el); return; }
+  }
+
+  // Fallback: ESPN athlete search
+  try {
+    const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/athletes?limit=50&active=true`;
+    const data = await fetch(url).then(r => r.json());
+    const athletes = (data.items || data.athletes || []);
+    const players = athletes
+      .filter(a => (a.displayName || a.fullName || '').toLowerCase().includes(q.toLowerCase()))
+      .slice(0, 15)
+      .map(a => ({
+        id: a.id,
+        name: a.displayName || a.fullName,
+        team: a.team?.abbreviation || '?',
+        position: a.position?.abbreviation || '?'
+      }));
+    renderResults(players, el);
+  } catch(e) {
+    el.innerHTML = '<div class="no-results">Search unavailable — select a game first to search that game\'s roster</div>';
+  }
+}
+
+function renderResults(players, el) {
+  if (!players.length) { el.innerHTML = '<div class="no-results">No players found</div>'; return; }
+  el.innerHTML = players.map(p => `
+    <div class="result-item" onclick="pickPlayer(${p.id},'${p.name.replace(/'/g,"\\'")}','${p.team}','${p.position}')">
+      <div class="result-pos">${p.position}</div>
+      <div>
+        <div class="result-name">${p.name}</div>
+        <div class="result-team">${p.team}</div>
+      </div>
+    </div>`).join('');
+}
+
+function pickPlayer(id, name, team, pos) {
+  const m = state.members.find(m => m.id == _mId);
+  if (m) { m.players[_mSlot] = { id, name, team, position: pos }; save(); }
+  closeModal(); renderFamily();
+}
+
+// ── Scoreboard ────────────────────────────────────────
+async function refreshScores() {
+  const el = document.getElementById('scoreboard-content');
+  if (!state.selectedGame) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚾</div><p>Select a game in <strong>① Pick Game</strong> first.</p></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="loading-state"><div class="spinner"></div><br>Loading box score...</div>`;
+  try {
+    const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=${state.selectedGame.id}`;
+    const data = await fetch(url).then(r => r.json());
+    state.rosterCache[state.selectedGame.id] = data;
+
+    // Log full key list to confirm doubles/triples/SB key names
+    const firstGroup = data?.boxscore?.players?.[0]?.statistics?.find(g => g.type === 'batting');
+    if (firstGroup) {
+      console.log('All batting keys:', firstGroup.keys);
+      const firstAth = firstGroup.athletes?.[0];
+      if (firstAth) {
+        const statObj = {};
+        firstGroup.keys.forEach((k,i) => statObj[k] = firstAth.stats[i]);
+        console.log('Full stat object for', firstAth.athlete?.displayName, ':', statObj);
+      }
+    }
+    renderScoreboard(data);
+    document.getElementById('last-updated').textContent = `Updated ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+  } catch(e) {
+    el.innerHTML = `<div class="alert-error">Couldn't load box score. Check your connection and try refreshing.</div>`;
+  }
+}
+
+function getStats(playerId, data) {
+  const boxscore = data?.boxscore;
+  if (!boxscore) return null;
+  for (const teamPlayers of (boxscore.players || [])) {
+    for (const group of (teamPlayers.statistics || [])) {
+      if (group.type !== 'batting') continue;
+      const keys = group.keys || [];
+      for (const athlete of (group.athletes || [])) {
+        if (String(athlete.athlete?.id) === String(playerId)) {
+          // Zip keys with stat values into a named object
+          const stats = {};
+          (athlete.stats || []).forEach((val, i) => {
+            stats[keys[i]] = val;
+          });
+          return stats;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function calcPts(stats) {
+  if (!stats) return { total: 0, pts: {}, raw: {} };
+  const sc = state.scoring;
+
+  // ESPN batting key names (confirmed from live API debug)
+  const hits    = parseFloat(stats['hits'])        || 0;
+  const doubles = parseFloat(stats['doubles'])     || 0;
+  const triples = parseFloat(stats['triples'])     || 0;
+  const hrs     = parseFloat(stats['homeRuns'])    || 0;
+  const singles = Math.max(0, hits - doubles - triples - hrs);
+
+  const raw = {
+    atBats:      parseFloat(stats['atBats'])       || 0,
+    hits,
+    singles,
+    doubles,
+    triples,
+    homeRuns:    hrs,
+    rbi:         parseFloat(stats['RBIs'])         || 0,
+    runs:        parseFloat(stats['runs'])         || 0,
+    stolenBases: parseFloat(stats['stolenBases'])  || 0,
+    walks:       parseFloat(stats['walks'])        || 0,
+    strikeouts:  parseFloat(stats['strikeouts'])   || 0,
+    hitByPitch:  parseFloat(stats['hitByPitch'])   || 0,
+  };
+
+  const pts = {
+    single:     raw.singles     * sc.single.value,
+    double:     raw.doubles     * sc.double.value,
+    triple:     raw.triples     * sc.triple.value,
+    homeRun:    raw.homeRuns    * sc.homeRun.value,
+    rbi:        raw.rbi         * sc.rbi.value,
+    run:        raw.runs        * sc.run.value,
+    stolenBase: raw.stolenBases * sc.stolenBase.value,
+    walk:       raw.walks       * sc.walk.value,
+    strikeout:  raw.strikeouts  * sc.strikeout.value,
+    hitByPitch: raw.hitByPitch  * sc.hitByPitch.value,
+  };
+
+  return { total: Object.values(pts).reduce((a,b) => a+b, 0), pts, raw };
+}
+
+function fmt(n) { return n % 1 === 0 ? String(n) : n.toFixed(1); }
+
+function renderScoreboard(data) {
+  const el = document.getElementById('scoreboard-content');
+  const status = data?.gameData?.status?.detailedState || '';
+  const isLive = data?.gameData?.status?.abstractGameState === 'Live';
+
+  const ranked = state.members.map((m, i) => {
+    let total = 0;
+    const players = m.players.filter(Boolean).map(p => {
+      const stats = getStats(p.id, data);
+      const { total: pts, raw } = calcPts(stats);
+      total += pts;
+      return { ...p, pts, raw, hasData: !!stats };
+    });
+    return { ...m, color: COLORS[i%COLORS.length], total, players };
+  }).sort((a,b) => b.total - a.total);
+
+  let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+    <div class="game-chip">⚾ <strong>${state.selectedGame.label}</strong></div>
+    <div class="game-chip" style="color:${isLive?'var(--red)':'var(--muted)'}">${isLive?'🔴 ':''}${status}</div>
+  </div>`;
+
+  html += `<div class="leaderboard">`;
+  ranked.forEach((m, i) => {
+    const names = m.players.map(p => p.name).join(' · ') || 'No players picked';
+    const breakdown = m.players.map(p => {
+      if (!p.hasData) return `${p.name}: no data yet`;
+      const r = p.raw, bits = [];
+      if (r.hits) bits.push(`${r.hits}H`);
+      if (r.homeRuns) bits.push(`${r.homeRuns}HR`);
+      if (r.rbi) bits.push(`${r.rbi}RBI`);
+      if (r.stolenBases) bits.push(`${r.stolenBases}SB`);
+      if (r.strikeouts) bits.push(`${r.strikeouts}K`);
+      return `${p.name}: ${bits.join(' ') || '—'}`;
+    }).join('<br>');
+    html += `<div class="leader-row${i===0?' first-place':''}">
+      <div class="rank-num">${i+1}</div>
+      <div class="leader-dot" style="background:${m.color}"></div>
+      <div class="leader-info">
+        <div class="leader-name">${m.name}</div>
+        <div class="leader-players">${names}</div>
+      </div>
+      <div class="leader-breakdown">${breakdown}</div>
+      <div class="leader-score">${fmt(m.total)}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  html += `<div class="card"><div class="card-title">Player Stats</div><div class="stats-wrap">
+    <table class="stats-table">
+      <thead><tr><th>Player</th><th>AB</th><th>H</th><th>1B</th><th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>R</th><th>BB</th><th>K</th><th>SB</th><th>Pts</th></tr></thead>
+      <tbody>`;
+
+  ranked.forEach(m => {
+    m.players.forEach(p => {
+      const r = p.raw || {}, nd = !p.hasData, dash = '–';
+      html += `<tr>
+        <td><span class="owner-dot" style="background:${m.color}"></span>${p.name}</td>
+        <td>${nd?dash:r.atBats}</td><td>${nd?dash:r.hits}</td>
+        <td>${nd?dash:r.singles}</td><td>${nd?dash:r.doubles}</td><td>${nd?dash:r.triples}</td>
+        <td class="${r.homeRuns>0?'val-pos':''}">${nd?dash:r.homeRuns}</td>
+        <td>${nd?dash:r.rbi}</td><td>${nd?dash:r.runs}</td><td>${nd?dash:r.walks}</td>
+        <td class="${r.strikeouts>0?'val-neg':''}">${nd?dash:r.strikeouts}</td>
+        <td class="${r.stolenBases>0?'val-pos':''}">${nd?dash:r.stolenBases}</td>
+        <td class="val-pts ${p.pts>0?'val-pos':p.pts<0?'val-neg':''}">${nd?dash:fmt(p.pts)}</td>
+      </tr>`;
+    });
+  });
+  html += `</tbody></table></div></div>`;
+  el.innerHTML = html;
+}
+
+// ── Settings ──────────────────────────────────────────
+function renderSettings() {
+  document.getElementById('scoring-grid').innerHTML = Object.entries(state.scoring).map(([key, s]) => `
+    <div class="scoring-row">
+      <span class="scoring-label"><span>${s.emoji}</span>${s.label}</span>
+      <div class="scoring-val-wrap">
+        <input type="number" class="scoring-val" step="0.5" value="${s.value}" onchange="updateScoring('${key}',this.value)">
+        <span style="font-size:12px;color:var(--muted)">pts</span>
+      </div>
+    </div>`).join('');
+}
+function updateScoring(k, v) { state.scoring[k].value = parseFloat(v)||0; save(); }
+function resetScoring() { state.scoring = JSON.parse(JSON.stringify(DEFAULT_SCORING)); save(); renderSettings(); }
+
+// ── Init ──────────────────────────────────────────────
+setToday();
+renderSettings();
+</script>
+</body>
+</html>
