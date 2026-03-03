@@ -181,7 +181,7 @@
   .modal-overlay.open { display: flex; }
   .modal {
     background: var(--white); border-radius: var(--radius); padding: 26px;
-    width: 100%; max-width: 480px; max-height: 82vh;
+    width: 100%; max-width: 480px; max-height: 88vh;
     display: flex; flex-direction: column; gap: 14px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.15);
   }
@@ -201,7 +201,8 @@
     padding: 10px 12px; border-radius: var(--radius-sm);
     cursor: pointer; border: 1px solid transparent; transition: all .12s;
   }
-  .result-item:hover { background: var(--accent-soft); border-color: #e8cdb8; }
+  .result-item:hover:not(.taken) { background: var(--accent-soft); border-color: #e8cdb8; }
+  .result-item.taken { cursor: not-allowed; }
   .result-pos {
     width: 34px; height: 34px; border-radius: 8px;
     background: var(--bg); border: 1px solid var(--border);
@@ -358,19 +359,20 @@
   </div>
 </div>
 
-<!-- Player Modal -->
+<!-- Roster Picker Modal -->
 <div class="modal-overlay" id="player-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">Pick a Player</div>
       <button class="btn btn-ghost btn-xs" onclick="closeModal()">✕ Close</button>
     </div>
+    <div id="roster-teams" style="display:flex;gap:8px;margin-bottom:4px"></div>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
-      <input type="text" class="search-input" id="player-search" placeholder="Search player name…" oninput="onSearchInput()">
+      <input type="text" class="search-input" id="player-search" placeholder="Filter by name…" oninput="filterRoster()">
     </div>
     <div class="search-results" id="search-results">
-      <div class="no-results">Start typing to search MLB players</div>
+      <div class="no-results">Select a game first to load rosters</div>
     </div>
   </div>
 </div>
@@ -551,9 +553,11 @@ function renderSlot(m, s) {
     <span class="slot-meta">${p.team} · ${p.position}</span>
     <button class="slot-remove" onclick="removePlayer(${m.id},${s})">✕</button>
   </div>`;
+  const lockedTeam = m.players.find(p => p)?.team;
+  const hint = lockedTeam ? `Add ${lockedTeam} player` : `Add player ${s+1}`;
   return `<div class="player-slot" onclick="openModal(${m.id},${s})">
     <span style="color:var(--muted2);font-size:18px">＋</span>
-    <span class="slot-label">Add player ${s+1}</span>
+    <span class="slot-label">${hint}</span>
   </div>`;
 }
 
@@ -563,85 +567,146 @@ function updateName(id, v) { const m = state.members.find(m => m.id == id); if(m
 function removePlayer(id, s) { const m = state.members.find(m => m.id == id); if(m){ m.players[s]=null; save(); renderFamily(); } }
 
 // ── Modal ─────────────────────────────────────────────
-let _mId, _mSlot;
+let _mId, _mSlot, _activeTeam;
+
+function getRosterFromCache(gameId) {
+  // Extract batters from both teams out of the cached ESPN summary
+  const data = state.rosterCache[gameId];
+  if (!data) return { away: { abbr: '?', name: '?', players: [] }, home: { abbr: '?', name: '?', players: [] } };
+
+  const teams = [];
+  for (const teamPlayers of (data?.boxscore?.players || [])) {
+    const abbr = teamPlayers.team?.abbreviation || '?';
+    const name = teamPlayers.team?.displayName || abbr;
+    const players = [];
+    const seen = new Set();
+    for (const group of (teamPlayers.statistics || [])) {
+      if (group.type !== 'batting') continue;
+      for (const ath of (group.athletes || [])) {
+        const a = ath.athlete;
+        if (a && !seen.has(a.id)) {
+          seen.add(a.id);
+          players.push({ id: a.id, name: a.displayName, team: abbr, position: a.position?.abbreviation || '?' });
+        }
+      }
+    }
+    teams.push({ abbr, name, players });
+  }
+  return { away: teams[0] || { abbr:'?', name:'?', players:[] }, home: teams[1] || { abbr:'?', name:'?', players:[] } };
+}
+
+function getAlreadyPickedPlayerIds() {
+  // Returns set of player IDs already assigned across all members
+  const ids = new Set();
+  for (const m of state.members) {
+    for (const p of m.players) {
+      if (p) ids.add(String(p.id));
+    }
+  }
+  return ids;
+}
+
+function getTeamPickedByMember(memberId) {
+  // Returns the team abbr this member has already picked (from their first non-null player)
+  const m = state.members.find(m => m.id == memberId);
+  if (!m) return null;
+  for (const p of m.players) {
+    if (p) return p.team;
+  }
+  return null;
+}
+
 function openModal(id, slot) {
   _mId = Number(id); _mSlot = Number(slot);
   document.getElementById('player-modal').classList.add('open');
   document.getElementById('player-search').value = '';
-  document.getElementById('search-results').innerHTML = '<div class="no-results">Start typing to search MLB players</div>';
-  setTimeout(() => document.getElementById('player-search').focus(), 80);
-}
-function closeModal() { document.getElementById('player-modal').classList.remove('open'); }
-document.getElementById('player-modal').addEventListener('click', e => { if (e.target.id==='player-modal') closeModal(); });
 
-let _searchTimer;
-function onSearchInput() {
-  clearTimeout(_searchTimer);
-  const q = document.getElementById('player-search').value.trim();
-  if (q.length < 2) { document.getElementById('search-results').innerHTML = '<div class="no-results">Type at least 2 characters</div>'; return; }
-  _searchTimer = setTimeout(() => doSearch(q), 300);
+  if (!state.selectedGame || !state.rosterCache[state.selectedGame.id]) {
+    document.getElementById('roster-teams').innerHTML = '';
+    document.getElementById('search-results').innerHTML = '<div class="no-results">No game selected — pick a game first.</div>';
+    return;
+  }
+
+  const { away, home } = getRosterFromCache(state.selectedGame.id);
+  const lockedTeam = getTeamPickedByMember(_mId);
+
+  // Team tab buttons
+  const teamsEl = document.getElementById('roster-teams');
+  // Default to away tab, but if that team is locked, switch to home
+  _activeTeam = lockedTeam === away.abbr ? home.abbr : away.abbr;
+
+  teamsEl.innerHTML = [away, home].map(t => {
+    // Lock the tab for the OPPOSITE team from the one already picked
+    const locked = lockedTeam && lockedTeam === t.abbr;
+    return `<button
+      id="team-tab-${t.abbr}"
+      class="btn btn-sm ${_activeTeam === t.abbr ? 'btn-primary' : 'btn-ghost'}"
+      style="${locked ? 'opacity:.35;cursor:not-allowed' : ''}"
+      onclick="${locked ? '' : `switchTeam('${t.abbr}')`}"
+      title="${locked ? 'Already have a player from this team' : ''}"
+    >${t.abbr} <span style="font-weight:400;font-size:11px">${t.name}</span></button>`;
+  }).join('');
+
+  renderRosterList();
 }
 
-async function doSearch(q) {
+function switchTeam(abbr) {
+  _activeTeam = abbr;
+  document.querySelectorAll('[id^="team-tab-"]').forEach(btn => {
+    btn.className = `btn btn-sm ${btn.id === 'team-tab-' + abbr ? 'btn-primary' : 'btn-ghost'}`;
+  });
+  document.getElementById('player-search').value = '';
+  renderRosterList();
+}
+
+function filterRoster() {
+  renderRosterList();
+}
+
+function renderRosterList() {
   const el = document.getElementById('search-results');
-  el.innerHTML = '<div class="no-results">Searching...</div>';
+  const q = (document.getElementById('player-search').value || '').toLowerCase();
+  const { away, home } = getRosterFromCache(state.selectedGame.id);
+  const teamData = _activeTeam === home.abbr ? home : away;
+  const pickedIds = getAlreadyPickedPlayerIds();
 
-  // Search roster from selected game cache first
-  if (state.selectedGame && state.rosterCache[state.selectedGame.id]) {
-    const cached = state.rosterCache[state.selectedGame.id];
-    const players = [];
-    for (const teamPlayers of (cached?.boxscore?.players || [])) {
-      for (const group of (teamPlayers.statistics || [])) {
-        for (const athlete of (group.athletes || [])) {
-          const a = athlete.athlete;
-          if (a && a.displayName.toLowerCase().includes(q.toLowerCase())) {
-            players.push({
-              id: a.id,
-              name: a.displayName,
-              team: teamPlayers.team?.abbreviation || '?',
-              position: a.position?.abbreviation || '?'
-            });
-          }
-        }
-      }
-    }
-    // Dedupe
-    const seen = new Set();
-    const unique = players.filter(p => !seen.has(p.id) && seen.add(p.id));
-    if (unique.length) { renderResults(unique, el); return; }
+  // Filter out already-picked players (except ones picked by this member in other slot)
+  const thisMember = state.members.find(m => m.id == _mId);
+  const myIds = new Set((thisMember?.players || []).filter(Boolean).map(p => String(p.id)));
+
+  let players = teamData.players.filter(p => {
+    if (q && !p.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  if (!players.length) {
+    el.innerHTML = '<div class="no-results">No players found</div>';
+    return;
   }
 
-  // Fallback: ESPN athlete search
-  try {
-    const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/athletes?limit=50&active=true`;
-    const data = await fetch(url).then(r => r.json());
-    const athletes = (data.items || data.athletes || []);
-    const players = athletes
-      .filter(a => (a.displayName || a.fullName || '').toLowerCase().includes(q.toLowerCase()))
-      .slice(0, 15)
-      .map(a => ({
-        id: a.id,
-        name: a.displayName || a.fullName,
-        team: a.team?.abbreviation || '?',
-        position: a.position?.abbreviation || '?'
-      }));
-    renderResults(players, el);
-  } catch(e) {
-    el.innerHTML = '<div class="no-results">Search unavailable — select a game first to search that game\'s roster</div>';
-  }
-}
-
-function renderResults(players, el) {
-  if (!players.length) { el.innerHTML = '<div class="no-results">No players found</div>'; return; }
-  el.innerHTML = players.map(p => `
-    <div class="result-item" onclick="pickPlayer(${p.id},'${p.name.replace(/'/g,"\\'")}','${p.team}','${p.position}')">
+  el.innerHTML = players.map(p => {
+    const alreadyTaken = pickedIds.has(String(p.id)) && !myIds.has(String(p.id));
+    return `<div class="result-item ${alreadyTaken ? 'taken' : ''}"
+      onclick="${alreadyTaken ? '' : `pickPlayer(${p.id},'${p.name.replace(/'/g,"\\'")}','${p.team}','${p.position}')`}"
+      style="${alreadyTaken ? 'opacity:.4;cursor:not-allowed' : ''}">
       <div class="result-pos">${p.position}</div>
       <div>
         <div class="result-name">${p.name}</div>
-        <div class="result-team">${p.team}</div>
+        <div class="result-team">${p.team}${alreadyTaken ? ' · already picked' : ''}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
+
+function closeModal() { document.getElementById('player-modal').classList.remove('open'); }
+document.getElementById('player-modal').addEventListener('click', e => { if (e.target.id==='player-modal') closeModal(); });
+
+function pickPlayer(id, name, team, pos) {
+  const m = state.members.find(m => m.id == _mId);
+  if (m) { m.players[_mSlot] = { id, name, team, position: pos }; save(); }
+  closeModal(); renderFamily();
+}
+
 
 function pickPlayer(id, name, team, pos) {
   const m = state.members.find(m => m.id == _mId);
