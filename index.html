@@ -378,7 +378,11 @@
 </div>
 
 <script>
-const COLORS = ['#d97b4a','#5b7fa6','#5a8f6a','#9b6dbf','#c25c5c','#d4a44a'];
+const COLORS = [
+  '#d97b4a','#5b7fa6','#5a8f6a','#9b6dbf',
+  '#c25c5c','#d4a44a','#4ab8d9','#8f6a5a','#6abf9b'
+];
+
 
 const DEFAULT_SCORING = {
   single:     { label: 'Single',        emoji: '🔹', value: 1  },
@@ -411,6 +415,10 @@ try {
   if (s.members) state.members = s.members;
   if (s.scoring) state.scoring = { ...DEFAULT_SCORING, ...s.scoring };
 } catch(e) {}
+
+// ✅ ADD THIS — prevents ID collisions after page reload
+nextId = state.members.reduce((max, m) => Math.max(max, m.id), 0);
+
 
 function save() {
   try { localStorage.setItem('dd2_state', JSON.stringify({ members: state.members, scoring: state.scoring })); } catch(e) {}
