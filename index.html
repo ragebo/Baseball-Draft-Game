@@ -408,7 +408,7 @@ let state = {
   scoring: JSON.parse(JSON.stringify(DEFAULT_SCORING)),
   rosterCache: {},
 };
-let nextId = 10;
+let nextId = 9;
 
 try {
   const s = JSON.parse(localStorage.getItem('dd2_state') || '{}');
@@ -416,9 +416,8 @@ try {
   if (s.scoring) state.scoring = { ...DEFAULT_SCORING, ...s.scoring };
 } catch(e) {}
 
-// ✅ ADD THIS — prevents ID collisions after page reload
-nextId = state.members.reduce((max, m) => Math.max(max, m.id), 0);
-
+// Sync nextId to be above any existing member id, with a floor of 9
+nextId = state.members.reduce((max, m) => Math.max(max, Number(m.id) || 0), 9);
 
 function save() {
   try { localStorage.setItem('dd2_state', JSON.stringify({ members: state.members, scoring: state.scoring })); } catch(e) {}
@@ -710,17 +709,11 @@ function closeModal() { document.getElementById('player-modal').classList.remove
 document.getElementById('player-modal').addEventListener('click', e => { if (e.target.id==='player-modal') closeModal(); });
 
 function pickPlayer(id, name, team, pos) {
-  const m = state.members.find(m => m.id == _mId);
+  const m = state.members.find(m => m.id === _mId);
   if (m) { m.players[_mSlot] = { id, name, team, position: pos }; save(); }
   closeModal(); renderFamily();
 }
 
-
-function pickPlayer(id, name, team, pos) {
-  const m = state.members.find(m => m.id == _mId);
-  if (m) { m.players[_mSlot] = { id, name, team, position: pos }; save(); }
-  closeModal(); renderFamily();
-}
 
 // ── Scoreboard ────────────────────────────────────────
 async function refreshScores() {
